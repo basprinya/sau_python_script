@@ -38,11 +38,15 @@ def recognation(res):
                 rgb_small_frame = small_frame[:, :, ::-1]
 
                 # Find all the faces and face encodings in the current frame of video
-                face_locations = face_recognition.face_locations(rgb_small_frame)
+                face_locations = face_recognition.face_locations(
+                    rgb_small_frame, model="hog")
                 face_encodings = face_recognition.face_encodings(
                     rgb_small_frame, face_locations)
 
                 face_names = []
+                face_percent = []
+                percent = 0
+
                 for face_encoding in face_encodings:
                     # See if the face is a match for the known face(s)
                     matches = face_recognition.compare_faces(
@@ -58,9 +62,15 @@ def recognation(res):
                     face_distances = face_recognition.face_distance(
                         known_face_encodings, face_encoding)
                     best_match_index = np.argmin(face_distances)
-                    if matches[best_match_index]:
-                        name = known_face_names[best_match_index]
+                    face_percent_value = 1-face_distances[best_match_index]
 
+                    if face_percent_value >= 0.70:
+                        name = known_face_names[best_match_index]
+                        percent = round(face_percent_value*100, 2)
+                        face_percent.append(percent)
+                    else:
+                        name = "UNKNOWN"
+                        face_percent.append(0)
                     face_names.append(name)
 
             process_this_frame = not process_this_frame
@@ -73,15 +83,31 @@ def recognation(res):
                 bottom *= 4
                 left *= 4
 
-                # Draw a box around the face
-                cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-
-                # Draw a label with a name below the face
-                cv2.rectangle(frame, (left, bottom - 35),
-                            (right, bottom), (0, 0, 255), cv2.FILLED)
-                font = cv2.FONT_HERSHEY_DUPLEX
-                cv2.putText(frame, name, (left + 6, bottom - 6),
-                            font, 1.0, (255, 255, 255), 1)
+                if name == "UNKNOWN":
+                    color = [192, 192, 192]
+                    cv2.rectangle(frame, (left, top),
+                                  (right, bottom), color, 2)
+                    cv2.rectangle(frame, (left-1, top),
+                                  (right+1, top), color, cv2.FILLED)
+                    cv2.rectangle(frame, (left-1, bottom),
+                                  (right+1, bottom+30), color, cv2.FILLED)
+                    font = cv2.FONT_HERSHEY_DUPLEX
+                    cv2.putText(frame, name, (left+6, bottom+23),
+                                font, 0.6, (255, 255, 255), 1)
+                    cv2.putText(frame, str(percent), (left+6, bottom+50),
+                                font, 0.6, (255, 255, 255), 1)
+                else:
+                    color = [255, 102, 51]
+                    cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
+                    cv2.rectangle(frame, (left-1, top),
+                                (right+1, top), color, cv2.FILLED)
+                    cv2.rectangle(frame, (left-1, bottom),
+                                (right+1, bottom+30), color, cv2.FILLED)
+                    font = cv2.FONT_HERSHEY_DUPLEX
+                    cv2.putText(frame, name, (left+6, bottom+23),
+                                font, 0.6, (255, 255, 255), 1)
+                    cv2.putText(frame, str(percent), (left+6, bottom+50),
+                                font, 0.6, (255, 255, 255), 1)
 
             # Display the resulting image
             cv2.imshow('Video', frame)
