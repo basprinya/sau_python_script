@@ -3,16 +3,25 @@ import cv2
 import numpy as np
 
 video_capture = cv2.VideoCapture(0)
-obama_image = face_recognition.load_image_file("imgs/source/6319c10022.jpg")
-obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
-known_face_encodings = [
-    obama_face_encoding
+obama_image = face_recognition.load_image_file("imgs/source/6319C10022-1.jpg")
+
+obama_face_encoding = [
+    face_recognition.face_encodings(
+        face_recognition.load_image_file("imgs/source/6319C10022-1.jpg"))[0],
+    face_recognition.face_encodings(
+        face_recognition.load_image_file("imgs/source/6319C10022-1.jpg"))[0]
 ]
-known_face_names = [
+
+obama_face_name = [
     "Detected"
 ]
 
-face_locations = []
+known_face_encodings = obama_face_encoding
+known_face_names = obama_face_name
+
+print(known_face_encodings)
+
+""" face_locations = []
 face_encodings = []
 face_names = []
 process_this_frame = True
@@ -91,4 +100,4 @@ while True:
 
 # Release handle to the webcam
 video_capture.release()
-cv2.destroyAllWindows()
+cv2.destroyAllWindows() """
