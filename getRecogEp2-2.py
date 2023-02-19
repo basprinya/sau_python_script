@@ -27,7 +27,7 @@ def checkDateTime():
                 showNoclass() """
                 main()
             else:
-                print('NO')
+                print('No')
                 
 
 def recognation(res):
