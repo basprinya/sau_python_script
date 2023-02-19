@@ -22,10 +22,13 @@ def checkDateTime():
             time_db_start = res['time_start']
             time_db_end = res['time_end']
             if time_rp < time_db_start or time_rp > time_db_end:
-                video_capture.release()
+                """ video_capture.release()
                 cv2.destroyAllWindows()
-                showNoclass()
+                showNoclass() """
                 main()
+            else:
+                print('NO')
+                
 
 def recognation(res):
     known_face_names = []
