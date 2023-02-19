@@ -4,10 +4,22 @@ import numpy as np
 import requests
 from datetime import date, datetime
 import datetime
-import re
 
 video_capture = cv2.VideoCapture(0)
 getStatus = False
+
+def checkDateTime():
+    response = requests.get("http://localhost:30000/api/checks/date")
+    if response.status_code == 200:
+        res = response.json()
+        today = date.today()
+        if str(today) == str(res['date']):
+            time_rp = datetime.datetime.now().time().strftime('%H:%M:%S')
+            time_db_start = res['time_start']
+            time_db_end = res['time_end']
+            if time_rp < time_db_start or time_rp > time_db_end:
+                main()
+            
 
 def recognation(res):
     known_face_names = []
@@ -26,6 +38,7 @@ def recognation(res):
         process_this_frame = True
 
         while True:
+            print('loop 2')
             # Grab a single frame of video
             ret, frame = video_capture.read()
 
@@ -64,10 +77,11 @@ def recognation(res):
                     best_match_index = np.argmin(face_distances)
                     face_percent_value = 1-face_distances[best_match_index]
 
-                    if face_percent_value >= 0.70:
+                    if face_percent_value >= 0.60:
                         name = known_face_names[best_match_index]
                         percent = round(face_percent_value*100, 2)
                         face_percent.append(percent)
+                        #print('Scanning!')
                     else:
                         name = "UNKNOWN"
                         face_percent.append(0)
@@ -111,7 +125,8 @@ def recognation(res):
 
             # Display the resulting image
             cv2.imshow('Video', frame)
-
+            checkDateTime() 
+            
             # Hit 'q' on the keyboard to quit!
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -133,48 +148,56 @@ def recognation(res):
 
     
 
+def main():
+    getStatus = False
 
-while True:
+    
+    while True:
+        print('loop 1')
 
-    if getStatus == False:
+        if getStatus == False:
 
-        today = date.today()
+            today = date.today()
 
-        response = requests.get("http://localhost:30000/api/checks/date")
-        if response.status_code == 200:
-            res = response.json()
+            response = requests.get("http://localhost:30000/api/checks/date")
+            if response.status_code == 200:
+                res = response.json()
 
-            # ตรวจสอบวันที่
-            if str(today) == str(res['date']):
+                # ตรวจสอบวันที่
+                if str(today) == str(res['date']):
 
-                # หากตรงเก็บ major_id ไว้อ้างอิง
-                major_id = res['major_id']
+                    # หากตรงเก็บ major_id ไว้อ้างอิง
+                    major_id = res['major_id']
 
-                # ตรวจสอบ time
-                time_rp = datetime.datetime.now().time().strftime('%H:%M:%S')
-                time_db_start = res['time_start']
-                time_db_end = res['time_end']
+                    # ตรวจสอบ time
+                    time_rp = datetime.datetime.now().time().strftime('%H:%M:%S')
+                    time_db_start = res['time_start']
+                    time_db_end = res['time_end']
 
-                # ตรวจสอบเวลาเช็คชื่อ
-                if time_rp >= time_db_start and time_rp <= time_db_end:
-                    #print('เช็คชื่อได้')
-                    response = requests.get(
-                        "http://localhost:30000/api/checks/imgs/"+str(major_id))
-                    if response.status_code == 200:
-                        getStatus = True
-                        res = response.json()
-                        recognation(res)
+                    # ตรวจสอบเวลาเช็คชื่อ
+                    if time_rp >= time_db_start and time_rp <= time_db_end:
+                        #print('เช็คชื่อได้')
+                        response = requests.get(
+                            "http://localhost:30000/api/checks/imgs/"+str(major_id))
+                        if response.status_code == 200:
+                            print(response.status_code)
+                            getStatus = True
+                            res = response.json()
+                            recognation(res)
+                        else:
+                            print(response.status_code)
+                            getStatus = False
+                            #print(response.json())
                     else:
                         getStatus = False
-                        print(response.status_code)
-                        print(response.json())
+                        #print('No time!')
                 else:
                     getStatus = False
-                    print('เช็คชื่อไม่ได้')
-            else:
-                getStatus = False
-                print('ไม่ตรง')
+                    #print('No date!')
 
-        else:
-            print(response.status_code)
-            print(response.json())
+            else:
+                """ print(response.status_code)
+                print(response.json()) """
+
+
+main()
